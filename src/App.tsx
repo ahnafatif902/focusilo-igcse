@@ -1,114 +1,66 @@
-/**
- * @license
- * SPDX-License-Identifier: Apache-2.0
- */
-
 import React, { useState } from 'react';
-import { LayoutDashboard, BookOpen, Timer, User } from 'lucide-react';
-import { clsx, type ClassValue } from 'clsx';
-import { twMerge } from 'tailwind-merge';
-import Dashboard from './components/Dashboard';
-import Subjects from './components/Subjects';
-import Study from './components/Study';
-import Profile from './components/Profile';
-import SubjectDetail from './components/SubjectDetail';
+import { BrowserRouter as Router, Routes, Route, useNavigate, Navigate } from 'react-router-dom';
 
-function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs));
-}
+import { Dashboard } from './pages/Dashboard';
+import { Vault } from './pages/Vault';
+import { Inject } from './pages/Inject';
+import { Quiz } from './pages/Quiz';
+import { Login } from './pages/Auth';
+import { InjectionModule as Upload } from './pages/Upload';
 
-type Screen = 'Dashboard' | 'Subjects' | 'Study' | 'Profile';
+import { FocusTimer } from './pages/FocusTimer';
+import { Progress } from './pages/Progress';
+import { FAQ } from './pages/FAQ';
+import { Sidebar } from './components/Sidebar';
 
-export default function App() {
-  const [activeScreen, setActiveScreen] = useState<Screen>('Dashboard');
-  const [selectedSubject, setSelectedSubject] = useState<any>(null);
+function AppContent() {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [userName, setUserName] = useState('');
+  const navigate = useNavigate();
 
-  const renderScreen = () => {
-    if (activeScreen === 'Subjects' && selectedSubject) {
-      return (
-        <SubjectDetail 
-          subject={selectedSubject} 
-          onBack={() => setSelectedSubject(null)} 
-        />
-      );
-    }
-
-    switch (activeScreen) {
-      case 'Dashboard': return <Dashboard />;
-      case 'Subjects': return (
-        <Subjects onSelectSubject={(subject) => setSelectedSubject(subject)} />
-      );
-      case 'Study': return <Study />;
-      case 'Profile': return <Profile />;
-      default: return <Dashboard />;
-    }
-  };
-
-  const handleNavClick = (screen: Screen) => {
-    setActiveScreen(screen);
-    if (screen !== 'Subjects') {
-      setSelectedSubject(null);
-    }
-  };
-
-  const navItems = [
-    { id: 'Dashboard', icon: LayoutDashboard, label: 'Dash' },
-    { id: 'Subjects', icon: BookOpen, label: 'Books' },
-    { id: 'Study', icon: Timer, label: 'Study' },
-    { id: 'Profile', icon: User, label: 'Me' },
-  ] as const;
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-[100dvh] bg-bg-base relative overflow-hidden flex flex-col font-sans">
+        <Login onLogin={(name) => {
+          setUserName(name);
+          setIsAuthenticated(true);
+          navigate('/');
+        }} />
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-black text-white pb-24">
-      {/* Header */}
-      <header className="p-6 border-b-4 border-white sticky top-0 bg-black z-10">
-        <div className="flex justify-between items-center">
-          <span className="text-2xl font-black italic tracking-tighter text-accent-green">
-            FOCUSILO
-          </span>
-          <div className="w-8 h-8 bg-white neo-border flex items-center justify-center">
-            <div className="w-4 h-1 bg-black" />
-          </div>
-        </div>
-      </header>
+    <div className="min-h-[100dvh] bg-bg-base flex flex-col md:flex-row font-sans overflow-hidden">
+      <Sidebar />
 
-      {/* Main Content */}
-      <main className="max-w-md mx-auto">
-        {renderScreen()}
+      {/* Main Content Area */}
+      <main className="flex-1 overflow-y-auto relative h-[calc(100dvh-72px)] md:h-screen hide-scrollbar pb-6 md:pb-0">
+        {/* Subtle background glow */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[500px] h-[500px] bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
+        
+        <div className="relative z-10 w-full max-w-7xl mx-auto">
+          <Routes>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/vault" element={<Vault />} />
+            <Route path="/inject" element={<Inject />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/timer" element={<FocusTimer />} />
+            <Route path="/progress" element={<Progress />} />
+            <Route path="/faq" element={<FAQ />} />
+            <Route path="/upload" element={<Upload onParsed={() => navigate('/vault')} />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </div>
       </main>
-
-      {/* Bottom Navigation */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-black border-t-4 border-white px-4 py-2 z-20">
-        <div className="max-w-md mx-auto flex justify-between items-center">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = activeScreen === item.id;
-            return (
-              <button
-                key={item.id}
-                onClick={() => handleNavClick(item.id)}
-                className={cn(
-                  "flex flex-col items-center justify-center p-2 transition-all",
-                  isActive ? "text-accent-blue translate-y-[-4px]" : "text-white/60"
-                )}
-              >
-                <div className={cn(
-                  "p-2 mb-1 transition-all",
-                  isActive && "bg-accent-blue text-black neo-border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                )}>
-                  <Icon size={24} strokeWidth={isActive ? 3 : 2} />
-                </div>
-                <span className={cn(
-                  "text-[10px] font-black uppercase tracking-widest",
-                  isActive ? "text-accent-blue" : "text-white/60"
-                )}>
-                  {item.label}
-                </span>
-              </button>
-            );
-          })}
-        </div>
-      </nav>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <AppContent />
+    </Router>
   );
 }

@@ -1,7 +1,8 @@
 import React, { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { edexcelData } from '../data/edexcelData';
-import { RefreshCcw } from 'lucide-react';
+import { RefreshCcw, BrainCircuit, Layers } from 'lucide-react';
+import { QuizEngine, Question } from './QuizEngine';
 
 interface FlattenedPoint {
   subjectName: string;
@@ -14,7 +15,49 @@ interface FlattenedPoint {
   masteryLevel: number;
 }
 
+// Mock questions for demonstration
+const mockQuestions: Question[] = [
+  {
+    id: 'q1',
+    type: 'MCQ',
+    question: 'Which of the following is NOT a characteristic shared by all living organisms?',
+    aoLevel: 'AO1',
+    options: [
+      { id: 'o1', text: 'Respiration', isCorrect: false, feedback: 'All living organisms respire to release energy.' },
+      { id: 'o2', text: 'Photosynthesis', isCorrect: true, feedback: 'Only plants and some bacteria/protoctists photosynthesise. Animals and fungi do not.' },
+      { id: 'o3', text: 'Excretion', isCorrect: false, feedback: 'All living organisms excrete metabolic waste.' },
+      { id: 'o4', text: 'Sensitivity', isCorrect: false, feedback: 'All living organisms respond to their surroundings.' }
+    ]
+  },
+  {
+    id: 'q2',
+    type: 'ACTIVE_RECALL',
+    question: 'Describe the common features shared by organisms within the plant kingdom.',
+    aoLevel: 'AO2',
+    markScheme: [
+      { id: 'm1', point: 'They are multicellular organisms' },
+      { id: 'm2', point: 'Their cells contain chloroplasts and are able to carry out photosynthesis' },
+      { id: 'm3', point: 'Their cells have cellulose cell walls' },
+      { id: 'm4', point: 'They store carbohydrates as starch or sucrose' }
+    ]
+  },
+  {
+    id: 'q3',
+    type: 'MCQ',
+    question: 'Calculate 15% of 240.',
+    aoLevel: 'AO2',
+    options: [
+      { id: 'o1', text: '24', isCorrect: false, feedback: 'That is 10%.' },
+      { id: 'o2', text: '36', isCorrect: true, feedback: 'Correct. 10% is 24, 5% is 12. 24 + 12 = 36.' },
+      { id: 'o3', text: '40', isCorrect: false, feedback: 'Incorrect calculation.' },
+      { id: 'o4', text: '15', isCorrect: false, feedback: 'That is the percentage, not the value.' }
+    ]
+  }
+];
+
 const Study = () => {
+  const [mode, setMode] = useState<'FLASHCARDS' | 'QUIZ'>('FLASHCARDS');
+  
   const allPoints = useMemo(() => {
     const flattened: FlattenedPoint[] = [];
     edexcelData.subjects.forEach(subject => {
@@ -48,12 +91,28 @@ const Study = () => {
       if (currentIndex < allPoints.length - 1) {
         setCurrentIndex(prev => prev + 1);
       } else {
-        // Loop or show finished state
         setCurrentIndex(0);
       }
       setDirection(0);
     }, 200);
   };
+
+  if (mode === 'QUIZ') {
+    return (
+      <div className="flex flex-col min-h-[calc(100vh-80px)]">
+        <div className="p-6 pb-0 flex justify-between items-center">
+          <h1 className="text-3xl font-black uppercase tracking-tighter">Quiz Mode</h1>
+          <button 
+            onClick={() => setMode('FLASHCARDS')}
+            className="text-xs font-bold uppercase tracking-widest text-accent-blue flex items-center gap-2"
+          >
+            <Layers size={16} /> Back to Cards
+          </button>
+        </div>
+        <QuizEngine questions={mockQuestions} />
+      </div>
+    );
+  }
 
   if (!currentPoint) {
     return (
@@ -72,12 +131,22 @@ const Study = () => {
             Card {currentIndex + 1} of {allPoints.length}
           </p>
         </div>
-        <button 
-          onClick={() => setCurrentIndex(0)}
-          className="p-2 bg-surface neo-border text-white/60"
-        >
-          <RefreshCcw size={16} />
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={() => setMode('QUIZ')}
+            className="p-2 bg-accent-blue text-black neo-border border-black shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
+            title="Switch to Quiz Mode"
+          >
+            <BrainCircuit size={16} />
+          </button>
+          <button 
+            onClick={() => setCurrentIndex(0)}
+            className="p-2 bg-surface neo-border text-white/60"
+            title="Restart Flashcards"
+          >
+            <RefreshCcw size={16} />
+          </button>
+        </div>
       </div>
 
       <div className="flex-1 flex flex-col justify-center perspective-1000">
